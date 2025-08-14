@@ -25,7 +25,7 @@ const API_PROVIDERS: ApiProvider[] = [
     color: "emerald",
     icon: "🤖",
     keyFormat: "sk-...",
-    placeholder: "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    placeholder: "sk-[your-openai-api-key-here]",
     guidelines: [
       "Create an account at platform.openai.com",
       "Navigate to API Keys section in your dashboard",
@@ -43,7 +43,7 @@ const API_PROVIDERS: ApiProvider[] = [
     color: "blue",
     icon: "💎",
     keyFormat: "AIza...",
-    placeholder: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    placeholder: "AIza[your-google-api-key-here]",
     guidelines: [
       "Visit Google AI Studio (makersuite.google.com)",
       "Sign in with your Google account",
@@ -61,7 +61,7 @@ const API_PROVIDERS: ApiProvider[] = [
     color: "purple",
     icon: "🧠",
     keyFormat: "sk-ant-...",
-    placeholder: "sk-ant-apiXX-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    placeholder: "sk-ant-api[your-anthropic-key-here]",
     guidelines: [
       "Sign up at console.anthropic.com",
       "Complete the verification process",
@@ -79,7 +79,7 @@ const API_PROVIDERS: ApiProvider[] = [
     color: "orange",
     icon: "⚡",
     keyFormat: "COHERE-...",
-    placeholder: "COHERE-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    placeholder: "COHERE-[your-cohere-api-key-here]",
     guidelines: [
       "Create account at dashboard.cohere.ai",
       "Verify your email address",
