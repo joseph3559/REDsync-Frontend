@@ -13,7 +13,6 @@ import {
   exportCoaCsv,
   fetchCoaRecords,
   deleteCoaRecords,
-  cleanupCoaDuplicates,
   type CoaUploadResult,
   type ColumnConfig 
 } from "@/lib/api";
@@ -65,16 +64,6 @@ export default function COADatabasePage() {
     failedFiles: 0,
     filesNeedingAttention: 0,
   });
-  
-  // Cleanup state
-  const [cleanupLoading, setCleanupLoading] = useState(false);
-  const [cleanupResults, setCleanupResults] = useState<{
-    message: string;
-    mergedRecords: number;
-    deletedRecords: number;
-    totalGroupsProcessed: number;
-    duplicateGroupsFound: number;
-  } | null>(null);
 
   // Load data from database on component mount
   useEffect(() => {
@@ -378,43 +367,6 @@ export default function COADatabasePage() {
     }
   };
 
-  const handleCleanupDuplicates = async () => {
-    try {
-      const token = getToken();
-      if (!token) {
-        setError("Authentication required");
-        return;
-      }
-      
-      setCleanupLoading(true);
-      setCleanupResults(null);
-      
-      console.log('Starting COA duplicate cleanup...');
-      const result = await cleanupCoaDuplicates(token);
-      
-      setCleanupResults(result);
-      console.log('Cleanup completed:', result);
-      
-      // Reload data to reflect changes
-      const response = await fetchCoaRecords(token);
-      setData(response.records);
-      
-      // Update stats
-      setUploadStats({
-        totalFilesUploaded: response.records.length,
-        successfulFiles: response.records.length,
-        failedFiles: 0,
-        filesNeedingAttention: response.records.filter(needsAttention).length,
-      });
-      
-    } catch (err) {
-      console.error('Failed to cleanup duplicates:', err);
-      setError('Failed to cleanup duplicate records. Please try again.');
-    } finally {
-      setCleanupLoading(false);
-    }
-  };
-
   const generateCSV = () => {
     if (data.length === 0) return '';
     
@@ -513,78 +465,18 @@ export default function COADatabasePage() {
               <span>{showUploadForm ? 'Hide Upload' : 'Upload PDFs'}</span>
             </button>
             {data.length > 0 && (
-              <>
-                <button
-                  onClick={handleCleanupDuplicates}
-                  disabled={cleanupLoading}
-                  className="bg-yellow-500/20 hover:bg-yellow-500/30 text-white px-4 py-3 rounded-lg transition-colors flex items-center space-x-2 backdrop-blur-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Remove duplicate records with same Sample # and Batch"
-                >
-                  {cleanupLoading ? (
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <Database className="w-5 h-5" />
-                  )}
-                  <span className="hidden sm:inline">
-                    {cleanupLoading ? 'Cleaning...' : 'Cleanup Duplicates'}
-                  </span>
-                </button>
-                <button
-                  onClick={clearAllData}
-                  className="bg-red-500/20 hover:bg-red-500/30 text-white px-4 py-3 rounded-lg transition-colors flex items-center space-x-2 backdrop-blur-sm"
-                  title="Clear all data"
-                >
-                  <Trash2 className="w-5 h-5" />
-                  <span className="hidden sm:inline">Clear All</span>
-                </button>
-              </>
+              <button
+                onClick={clearAllData}
+                className="bg-red-500/20 hover:bg-red-500/30 text-white px-4 py-3 rounded-lg transition-colors flex items-center space-x-2 backdrop-blur-sm"
+                title="Clear all data"
+              >
+                <Trash2 className="w-5 h-5" />
+                <span className="hidden sm:inline">Clear All</span>
+              </button>
             )}
           </div>
         </div>
       </div>
-
-      {/* Cleanup Results */}
-      {cleanupResults && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0">
-              <Database className="w-6 h-6 text-green-600" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-medium text-green-900 mb-2">
-                Duplicate Cleanup Completed
-              </h3>
-              <div className="text-sm text-green-700 space-y-1">
-                <p>{cleanupResults.message}</p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
-                  <div className="bg-white/50 rounded-lg p-3">
-                    <div className="text-lg font-semibold text-green-900">{cleanupResults.mergedRecords}</div>
-                    <div className="text-xs text-green-600">Records Updated</div>
-                  </div>
-                  <div className="bg-white/50 rounded-lg p-3">
-                    <div className="text-lg font-semibold text-green-900">{cleanupResults.deletedRecords}</div>
-                    <div className="text-xs text-green-600">Duplicates Removed</div>
-                  </div>
-                  <div className="bg-white/50 rounded-lg p-3">
-                    <div className="text-lg font-semibold text-green-900">{cleanupResults.duplicateGroupsFound}</div>
-                    <div className="text-xs text-green-600">Duplicate Groups</div>
-                  </div>
-                  <div className="bg-white/50 rounded-lg p-3">
-                    <div className="text-lg font-semibold text-green-900">{cleanupResults.totalGroupsProcessed}</div>
-                    <div className="text-xs text-green-600">Total Groups</div>
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => setCleanupResults(null)}
-                className="mt-3 text-sm text-green-600 hover:text-green-800 underline"
-              >
-                Dismiss
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Overview Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

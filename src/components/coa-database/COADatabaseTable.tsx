@@ -253,7 +253,7 @@ export default function COADatabaseTable({
 
   const getCellClassName = (cellId: string) => {
     const format = cellFormats[cellId];
-    let className = "px-4 py-4 text-sm text-gray-900 min-w-[140px] border-r border-gray-200";
+    let className = "px-4 py-4 text-sm text-gray-900 min-w-[140px] border-r border-gray-200 h-[60px] align-middle";
     
     if (format?.bold) className += " font-bold";
     if (format?.italic) className += " italic";
@@ -421,11 +421,11 @@ export default function COADatabaseTable({
                 <thead className="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 shadow-sm">
                   <tr>
                     {/* Row Number Header */}
-                    <th className="px-3 py-4 text-left border-b-2 border-gray-300 w-16 bg-gray-100">
+                    <th className="px-3 py-4 text-left border-b-2 border-gray-300 w-16 bg-gray-100 h-[60px] align-middle">
                       <span className="text-xs font-semibold text-gray-600">#</span>
                     </th>
                     {/* Select All Checkbox */}
-                    <th className="px-4 py-4 text-left border-b-2 border-gray-300 w-12 bg-gray-50">
+                    <th className="px-4 py-4 text-left border-b-2 border-gray-300 w-12 bg-gray-50 h-[60px] align-middle">
                       <input
                         type="checkbox"
                         checked={isAllSelected}
@@ -445,7 +445,7 @@ export default function COADatabaseTable({
                       return (
                         <th
                           key={`fixed-${index}-${originalIndex}`}
-                          className={`px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors min-w-[140px] border-b-2 border-gray-300 bg-gray-50 ${getColumnTypeColor(column)}`}
+                          className={`px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors min-w-[140px] border-b-2 border-gray-300 bg-gray-50 h-[60px] align-middle ${getColumnTypeColor(column)}`}
                           onClick={() => handleSort(column)}
                           title={getColumnTooltip(column)}
                         >
@@ -475,13 +475,13 @@ export default function COADatabaseTable({
                         }`}
                       >
                         {/* Row Number */}
-                        <td className="px-3 py-4 w-16 bg-gray-50 border-r border-gray-200 sticky left-0 z-10">
+                        <td className="px-3 py-4 w-16 bg-gray-50 border-r border-gray-200 sticky left-0 z-10 h-[60px] align-middle">
                           <span className="text-sm font-medium text-gray-600 select-none">
                             {rowIndex + 1}
                           </span>
                         </td>
                         {/* Row checkbox */}
-                        <td className="px-4 py-4 w-12">
+                        <td className="px-4 py-4 w-12 h-[60px] align-middle">
                           <input
                             type="checkbox"
                             checked={isSelected}
@@ -536,7 +536,7 @@ export default function COADatabaseTable({
                       return (
                         <th
                           key={`scrollable-${index}-${originalIndex}`}
-                          className={`px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors min-w-[140px] border-b-2 border-r border-gray-300 relative group bg-gray-50 ${getColumnTypeColor(column)}`}
+                          className={`px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors min-w-[140px] border-b-2 border-r border-gray-300 relative group bg-gray-50 h-[60px] align-middle ${getColumnTypeColor(column)}`}
                           onClick={() => handleSort(column)}
                           title={getColumnTooltip(column)}
                         >
