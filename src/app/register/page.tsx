@@ -12,7 +12,7 @@ export default function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "qa_team" as "super_admin" | "admin" | "qa_team"
+    role: "qa_team"
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -182,17 +182,24 @@ export default function RegisterPage() {
 
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Role</label>
-                  <select
+                  <input
+                    type="text"
+                    list="role-suggestions"
                     value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value as "super_admin" | "admin" | "qa_team" })}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all bg-white"
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all bg-white"
+                    placeholder="Enter your role or select from suggestions"
                     required
-                  >
-                    <option value="qa_team">QA Team</option>
-                    <option value="admin">Admin</option>
-                    <option value="super_admin">Super Admin</option>
-                  </select>
-                  <p className="mt-1 text-xs text-slate-500">Select your role (subject to admin approval)</p>
+                  />
+                  <datalist id="role-suggestions">
+                    <option value="QA Team" />
+                    <option value="Admin" />
+                    <option value="Super Admin" />
+                    <option value="Manager" />
+                    <option value="Analyst" />
+                    <option value="Technician" />
+                  </datalist>
+                  <p className="mt-1 text-xs text-slate-500">Select a suggested role or enter a custom one (subject to admin approval)</p>
                 </div>
 
                 <div>

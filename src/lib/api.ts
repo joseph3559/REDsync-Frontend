@@ -21,7 +21,7 @@ export async function loginRequest(email: string, password: string): Promise<{ t
 export async function registerRequest(
   email: string, 
   password: string, 
-  role: "super_admin" | "admin" | "qa_team",
+  role: string,
   name?: string
 ): Promise<{ user: any; message: string }> {
   const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
@@ -53,7 +53,7 @@ export interface User {
   id: string;
   email: string;
   name: string | null;
-  role: "super_admin" | "admin" | "qa_team";
+  role: string;
   status: "pending" | "approved" | "rejected";
   createdAt: string;
   updatedAt?: string;

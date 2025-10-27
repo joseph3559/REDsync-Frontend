@@ -78,16 +78,28 @@ export default function UserManagementPage() {
   }
 
   function getRoleBadgeColor(role: string) {
-    switch (role) {
-      case "super_admin":
-        return "bg-purple-100 text-purple-700 border-purple-200";
-      case "admin":
-        return "bg-blue-100 text-blue-700 border-blue-200";
-      case "qa_team":
-        return "bg-green-100 text-green-700 border-green-200";
-      default:
-        return "bg-gray-100 text-gray-700 border-gray-200";
+    const roleLower = role.toLowerCase();
+    if (roleLower.includes("super") || roleLower.includes("admin")) {
+      return "bg-purple-100 text-purple-700 border-purple-200";
     }
+    if (roleLower.includes("admin") || roleLower.includes("manager")) {
+      return "bg-blue-100 text-blue-700 border-blue-200";
+    }
+    if (roleLower.includes("qa") || roleLower.includes("quality")) {
+      return "bg-green-100 text-green-700 border-green-200";
+    }
+    if (roleLower.includes("analyst") || roleLower.includes("technician")) {
+      return "bg-cyan-100 text-cyan-700 border-cyan-200";
+    }
+    return "bg-slate-100 text-slate-700 border-slate-200";
+  }
+
+  function formatRole(role: string) {
+    // Convert snake_case to Title Case and capitalize words
+    return role
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   }
 
   function getStatusBadgeColor(status: string) {
@@ -219,9 +231,7 @@ export default function UserManagementPage() {
                     </td>
                     <td className="py-4 px-6">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold border ${getRoleBadgeColor(user.role)}`}>
-                        {user.role === "super_admin" && "Super Admin"}
-                        {user.role === "admin" && "Admin"}
-                        {user.role === "qa_team" && "QA Team"}
+                        {formatRole(user.role)}
                       </span>
                     </td>
                     <td className="py-4 px-6">
