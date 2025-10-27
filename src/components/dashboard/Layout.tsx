@@ -1,7 +1,6 @@
 "use client";
 import { ReactNode, useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { LogOut, User, Settings } from "lucide-react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { clearAllAuth, getUserFromToken, getToken } from "@/lib/auth";
@@ -106,12 +105,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </button>
             <div className="flex-1" />
             <div className="flex items-center gap-4">
-              {/* Company Logo */}
-              <div className="flex items-center gap-2">
-                <Image src="/logo.png" alt="RED Lecithin logo" width={32} height={32} className="rounded-lg" />
-                <span className="hidden sm:block text-sm font-semibold text-slate-700">RedLecithin Portal</span>
-              </div>
-
               {/* User Menu */}
               <div className="relative">
                 <button
