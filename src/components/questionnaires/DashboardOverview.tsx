@@ -307,7 +307,7 @@ export default function DashboardOverview() {
                       {q.originalFile.replace(/^.*[\\\/]/, '')}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {new Date(q.createdAt).toLocaleDateString()} • {q.answers.length} questions
+                      {new Date(q.createdAt).toLocaleDateString()} • {q.answers?.length || 0} questions
                     </p>
                   </div>
                 </div>
