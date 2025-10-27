@@ -17,13 +17,12 @@ import {
   type ColumnConfig 
 } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { countMeaningfulFields } from "@/lib/utils";
 
 // Helper function to determine if a record needs attention
 const needsAttention = (record: CoaUploadResult): boolean => {
-  // Check if it has fewer than 3 fields
-  const fieldCount = Object.keys(record).filter(key => 
-    key !== 'file' && record[key] !== null && record[key] !== undefined
-  ).length;
+  // Check if it has fewer than 3 meaningful fields
+  const fieldCount = countMeaningfulFields(record);
   
   if (fieldCount < 3) {
     return true;
@@ -602,6 +601,12 @@ export default function COADatabasePage() {
               selectedRows: selectedRows,
               loading: false
             });
+          }}
+          onColumnReorder={(oldIndex, newIndex) => {
+            const newColumns = [...columns];
+            const [movedColumn] = newColumns.splice(oldIndex, 1);
+            newColumns.splice(newIndex, 0, movedColumn);
+            setColumns(newColumns);
           }}
         />
       </div>

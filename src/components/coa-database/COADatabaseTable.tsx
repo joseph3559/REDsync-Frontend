@@ -14,9 +14,12 @@ import {
   EyeOff,
   Trash2,
   Download,
-  MoreHorizontal
+  MoreHorizontal,
+  Copy,
+  GripVertical
 } from "lucide-react";
 import type { CoaUploadResult } from "@/lib/api";
+import { isEmptyValue, safeToString } from "@/lib/utils";
 
 interface ColumnConfig {
   name: string;
@@ -36,6 +39,7 @@ interface COADatabaseTableProps {
   columnsConfig?: ColumnConfig[];
   onExport?: (selectedRows: CoaUploadResult[]) => void;
   onDelete?: (selectedRows: CoaUploadResult[]) => void;
+  onColumnReorder?: (oldIndex: number, newIndex: number) => void;
 }
 
 type SortConfig = {
@@ -59,7 +63,8 @@ export default function COADatabaseTable({
   newRowIds = new Set(),
   columnsConfig = [],
   onExport,
-  onDelete 
+  onDelete,
+  onColumnReorder 
 }: COADatabaseTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
@@ -89,6 +94,11 @@ export default function COADatabaseTable({
   }, [columns]);
   const [cellFormats, setCellFormats] = useState<Record<string, CellFormat>>({});
   const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
+  const [isDraggingCells, setIsDraggingCells] = useState(false);
+  const [dragRowId, setDragRowId] = useState<string | null>(null);
+  const [draggedColumn, setDraggedColumn] = useState<number | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<number | null>(null);
+  const [copyNotice, setCopyNotice] = useState<string | null>(null);
 
   // Use the exact columns from the backend, including blank ones
   const displayColumns = useMemo(() => {
@@ -104,9 +114,9 @@ export default function COADatabaseTable({
     return data.filter((row) => {
       // Search in sample_id, batch_id, and all column values
       const searchableValues = [
-        row.sample_id?.toString() || "",
-        row.batch_id?.toString() || "",
-        ...displayColumns.map(col => row[col]?.toString() || "")
+        safeToString(row.sample_id),
+        safeToString(row.batch_id),
+        ...displayColumns.map(col => safeToString(row[col]))
       ];
       
       return searchableValues.some(value => 
@@ -120,8 +130,8 @@ export default function COADatabaseTable({
     if (!sortConfig) return filteredData;
 
     return [...filteredData].sort((a, b) => {
-      const aValue = a[sortConfig.key]?.toString() || "";
-      const bValue = b[sortConfig.key]?.toString() || "";
+      const aValue = safeToString(a[sortConfig.key]);
+      const bValue = safeToString(b[sortConfig.key]);
       
       if (aValue < bValue) {
         return sortConfig.direction === "asc" ? -1 : 1;
@@ -236,9 +246,93 @@ export default function COADatabaseTable({
     onDelete?.(selectedData);
   };
 
+  const handleCopySelected = async () => {
+    const selectedData = sortedData.filter((row, index) => selectedRows.has(getRowId(row, index)));
+    if (selectedData.length === 0) return;
+
+    // Format data for Excel/clipboard
+    const headers = displayColumns;
+    const csvContent = [
+      headers.join('\t'), // Tab-separated for Excel
+      ...selectedData.map(row => 
+        headers.map(col => {
+          const value = formatCellValue(row[col], `${getRowId(row, 0)}-${col}`);
+          // Escape values that contain tabs, quotes, or newlines
+          if (value.includes('\t') || value.includes('"') || value.includes('\n')) {
+            return `"${value.replace(/"/g, '""')}"`;
+          }
+          return value || '';
+        }).join('\t')
+      )
+    ].join('\n');
+
+    try {
+      await navigator.clipboard.writeText(csvContent);
+      // Show brief success feedback
+      const count = selectedData.length;
+      setCopyNotice(`Copied ${count} row${count > 1 ? 's' : ''}`);
+      setTimeout(() => setCopyNotice(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+      // Fallback: create a textarea and copy
+      const textarea = document.createElement('textarea');
+      textarea.value = csvContent;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      const count = selectedData.length;
+      setCopyNotice(`Copied ${count} row${count > 1 ? 's' : ''}`);
+      setTimeout(() => setCopyNotice(null), 2000);
+    }
+  };
+
+  const handleColumnDragStart = (e: React.DragEvent, columnIndex: number) => {
+    setDraggedColumn(columnIndex);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', columnIndex.toString());
+  };
+
+  const handleColumnDragOver = (e: React.DragEvent, columnIndex: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverColumn(columnIndex);
+  };
+
+  const handleColumnDragLeave = () => {
+    setDragOverColumn(null);
+  };
+
+  const handleColumnDrop = (e: React.DragEvent, dropColumnIndex: number) => {
+    e.preventDefault();
+    if (draggedColumn !== null && draggedColumn !== dropColumnIndex) {
+      onColumnReorder?.(draggedColumn, dropColumnIndex);
+    }
+    setDraggedColumn(null);
+    setDragOverColumn(null);
+  };
+
+  const handleColumnDragEnd = () => {
+    setDraggedColumn(null);
+    setDragOverColumn(null);
+  };
+
   const formatCellValue = (value: unknown, cellId: string) => {
     const format = cellFormats[cellId];
-    let displayValue = value?.toString() || "";
+    
+    // Handle null values and "null" strings - convert to empty string for clean display
+    if (isEmptyValue(value)) {
+      return "";
+    }
+    
+    let displayValue = safeToString(value);
+    
+    // Standardize capitalization for status values
+    if (displayValue.toLowerCase() === 'negative') {
+      displayValue = 'Negative';
+    } else if (displayValue.toLowerCase() === 'review') {
+      displayValue = 'Review';
+    }
     
     if (format?.numberFormat === 'percentage' && !isNaN(Number(displayValue))) {
       displayValue = (Number(displayValue) * 100).toFixed(2) + '%';
@@ -262,6 +356,91 @@ export default function COADatabaseTable({
     if (selectedCells.has(cellId)) className += " bg-blue-100 border-blue-300";
     
     return className;
+  };
+
+  const beginCellDrag = (rowId: string, cellId: string, withAppend: boolean) => {
+    setIsDraggingCells(true);
+    setDragRowId(rowId);
+    setSelectedCells(prev => {
+      const next = new Set(prev);
+      if (!withAppend) next.clear();
+      next.add(cellId);
+      return next;
+    });
+  };
+
+  const extendCellDrag = (rowId: string, cellId: string) => {
+    if (!isDraggingCells || !dragRowId || dragRowId !== rowId) return;
+    setSelectedCells(prev => {
+      if (prev.has(cellId)) return prev;
+      const next = new Set(prev);
+      next.add(cellId);
+      return next;
+    });
+  };
+
+  const endCellDrag = () => {
+    setIsDraggingCells(false);
+    setDragRowId(null);
+  };
+
+  const handleCopySelectedCells = async () => {
+    if (selectedCells.size === 0) return;
+
+    // Build rowId -> row mapping for ordering
+    const rowIdToRow: Record<string, CoaUploadResult> = {};
+    const rowOrder: string[] = [];
+    sortedData.forEach((row, index) => {
+      const id = getRowId(row, index);
+      rowIdToRow[id] = row;
+      rowOrder.push(id);
+    });
+
+    // Group selected cells by rowId
+    const rowToCells: Record<string, { colKey: string; colIndex: number; cellId: string }[]> = {};
+    selectedCells.forEach(cellId => {
+      const lastDash = cellId.lastIndexOf('-');
+      if (lastDash <= 0) return;
+      const rowId = cellId.slice(0, lastDash);
+      const colKey = cellId.slice(lastDash + 1);
+      const colIndex = columns.indexOf(colKey);
+      if (colIndex === -1) return;
+      if (!rowToCells[rowId]) rowToCells[rowId] = [];
+      rowToCells[rowId].push({ colKey, colIndex, cellId });
+    });
+
+    // Create clipboard content: each row on its own line, cells ordered by column index
+    const lines: string[] = [];
+    rowOrder.forEach(rowId => {
+      const cells = rowToCells[rowId];
+      if (!cells || cells.length === 0) return;
+      const row = rowIdToRow[rowId];
+      const ordered = cells.sort((a, b) => a.colIndex - b.colIndex);
+      const values = ordered.map(c => {
+        const v = formatCellValue(row[c.colKey], c.cellId);
+        const s = v || '';
+        return (s.includes('\t') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g, '""')}"` : s;
+      });
+      lines.push(values.join('\t'));
+    });
+
+    const content = lines.join('\n');
+    try {
+      await navigator.clipboard.writeText(content);
+      const count = selectedCells.size;
+      setCopyNotice(`Copied ${count} cell${count > 1 ? 's' : ''}`);
+      setTimeout(() => setCopyNotice(null), 2000);
+    } catch (err) {
+      const textarea = document.createElement('textarea');
+      textarea.value = content;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      const count = selectedCells.size;
+      setCopyNotice(`Copied ${count} cell${count > 1 ? 's' : ''}`);
+      setTimeout(() => setCopyNotice(null), 2000);
+    }
   };
 
   const isAllSelected = selectedRows.size > 0 && selectedRows.size === sortedData.length;
@@ -301,7 +480,17 @@ export default function COADatabaseTable({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div
+      className="bg-white rounded-lg shadow-sm border border-gray-200"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c' && selectedCells.size > 0) {
+          e.preventDefault();
+          handleCopySelectedCells();
+        }
+      }}
+      onMouseUp={endCellDrag}
+    >
       <style jsx>{`
         .bg-gray-25 {
           background-color: #fafafa;
@@ -379,12 +568,34 @@ export default function COADatabaseTable({
             </button>
           </div>
 
+          {/* Actions for Selected Cells */}
+          {selectedCells.size > 0 && (
+            <div className="flex items-center space-x-1 pr-3 border-r border-gray-300">
+              <span className="text-xs font-medium text-gray-600 mr-2">Cells: {selectedCells.size}</span>
+              <button
+                onClick={handleCopySelectedCells}
+                className="p-1 hover:bg-gray-200 rounded"
+                title="Copy Selected Cells"
+              >
+                <Copy className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           {/* Actions for Selected Rows */}
           {selectedRows.size > 0 && (
             <div className="flex items-center space-x-1 pl-3 border-l border-gray-300">
               <span className="text-xs font-medium text-gray-600 mr-2">
                 {selectedRows.size} selected:
               </span>
+              <button 
+                id="copy-button"
+                onClick={handleCopySelected}
+                className="p-1 hover:bg-gray-200 rounded" 
+                title="Copy Selected (Excel Format)"
+              >
+                <Copy className="w-4 h-4" />
+              </button>
               <button 
                 onClick={handleExportSelected}
                 className="p-1 hover:bg-gray-200 rounded" 
@@ -445,12 +656,35 @@ export default function COADatabaseTable({
                       return (
                         <th
                           key={`fixed-${index}-${originalIndex}`}
-                          className={`px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors min-w-[140px] border-b-2 border-gray-300 bg-gray-50 h-[60px] align-middle ${getColumnTypeColor(column)}`}
+                          className={`px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors min-w-[140px] border-b-2 border-gray-300 bg-gray-50 h-[60px] align-middle ${getColumnTypeColor(column)} ${
+                            draggedColumn === originalIndex ? 'opacity-50' : ''
+                          } ${
+                            dragOverColumn === originalIndex ? 'border-blue-400 bg-blue-50' : ''
+                          }`}
+                          draggable
+                          onDragStart={(e) => handleColumnDragStart(e, originalIndex)}
+                          onDragOver={(e) => handleColumnDragOver(e, originalIndex)}
+                          onDragLeave={handleColumnDragLeave}
+                          onDrop={(e) => handleColumnDrop(e, originalIndex)}
+                          onDragEnd={handleColumnDragEnd}
                           onClick={() => handleSort(column)}
+                          onMouseDown={(e) => e.stopPropagation()}
                           title={getColumnTooltip(column)}
                         >
                           <div className="flex items-center justify-between">
-                            <span className="truncate font-semibold">{column || `Column ${originalIndex + 1}`}</span>
+                            <div className="flex items-center space-x-2">
+                              {/* Drag handle - only show for non-essential columns */}
+                              {originalIndex !== 0 && column !== 'Batch' && (
+                                <div 
+                                  className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing"
+                                  title="Drag to reorder"
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                >
+                                  <GripVertical className="w-3 h-3 text-gray-400" />
+                                </div>
+                              )}
+                              <span className="truncate font-semibold">{column || `Column ${originalIndex + 1}`}</span>
+                            </div>
                             {getSortIcon(column)}
                           </div>
                         </th>
@@ -500,17 +734,12 @@ export default function COADatabaseTable({
                             <td
                               key={`fixed-${colIndex}-${originalIndex}-${rowIndex}`}
                               className={`${getCellClassName(cellId)} bg-gray-25`}
-                              onClick={() => {
-                                const newSelected = new Set(selectedCells);
-                                if (newSelected.has(cellId)) {
-                                  newSelected.delete(cellId);
-                                } else {
-                                  newSelected.add(cellId);
-                                }
-                                setSelectedCells(newSelected);
+                              onMouseDown={(e) => {
+                                beginCellDrag(rowId, cellId, e.shiftKey || e.ctrlKey || e.metaKey);
                               }}
+                              onMouseEnter={() => extendCellDrag(rowId, cellId)}
                             >
-                              <div className="truncate font-medium" title={row[column]?.toString() || ""}>
+                              <div className="truncate font-medium" title={safeToString(row[column])}>
                                 {formatCellValue(row[column], cellId) || "-"}
                               </div>
                             </td>
@@ -536,12 +765,33 @@ export default function COADatabaseTable({
                       return (
                         <th
                           key={`scrollable-${index}-${originalIndex}`}
-                          className={`px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors min-w-[140px] border-b-2 border-r border-gray-300 relative group bg-gray-50 h-[60px] align-middle ${getColumnTypeColor(column)}`}
+                          className={`px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors min-w-[140px] border-b-2 border-r border-gray-300 relative group bg-gray-50 h-[60px] align-middle ${getColumnTypeColor(column)} ${
+                            draggedColumn === originalIndex ? 'opacity-50' : ''
+                          } ${
+                            dragOverColumn === originalIndex ? 'border-blue-400 bg-blue-50' : ''
+                          }`}
+                          draggable
+                          onDragStart={(e) => handleColumnDragStart(e, originalIndex)}
+                          onDragOver={(e) => handleColumnDragOver(e, originalIndex)}
+                          onDragLeave={handleColumnDragLeave}
+                          onDrop={(e) => handleColumnDrop(e, originalIndex)}
+                          onDragEnd={handleColumnDragEnd}
                           onClick={() => handleSort(column)}
+                          onMouseDown={(e) => e.stopPropagation()}
                           title={getColumnTooltip(column)}
                         >
                           <div className="flex items-center justify-between">
-                            <span className="truncate font-semibold">{column || `Column ${originalIndex + 1}`}</span>
+                            <div className="flex items-center space-x-2">
+                              {/* Drag handle */}
+                              <div 
+                                className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing"
+                                title="Drag to reorder"
+                                onMouseDown={(e) => e.stopPropagation()}
+                              >
+                                <GripVertical className="w-3 h-3 text-gray-400" />
+                              </div>
+                              <span className="truncate font-semibold">{column || `Column ${originalIndex + 1}`}</span>
+                            </div>
                             <div className="flex items-center space-x-1">
                               {getSortIcon(column)}
                               {/* Column visibility toggle */}
@@ -588,17 +838,12 @@ export default function COADatabaseTable({
                             <td
                               key={`scrollable-${colIndex}-${originalIndex}-${rowIndex}`}
                               className={getCellClassName(cellId)}
-                              onClick={() => {
-                                const newSelected = new Set(selectedCells);
-                                if (newSelected.has(cellId)) {
-                                  newSelected.delete(cellId);
-                                } else {
-                                  newSelected.add(cellId);
-                                }
-                                setSelectedCells(newSelected);
+                              onMouseDown={(e) => {
+                                beginCellDrag(rowId, cellId, e.shiftKey || e.ctrlKey || e.metaKey);
                               }}
+                              onMouseEnter={() => extendCellDrag(rowId, cellId)}
                             >
-                              <div className="truncate font-medium" title={row[column]?.toString() || ""}>
+                              <div className="truncate font-medium" title={safeToString(row[column])}>
                                 {formatCellValue(row[column], cellId) || "-"}
                               </div>
                             </td>
@@ -614,6 +859,13 @@ export default function COADatabaseTable({
         )}
       </div>
       
+      {/* Copy feedback toast */}
+      {copyNotice && (
+        <div className="fixed bottom-6 right-6 bg-black/80 text-white text-sm px-3 py-2 rounded-md shadow select-none">
+          {copyNotice}
+        </div>
+      )}
+
       {/* Footer */}
       {sortedData.length > 0 && (
         <div className="px-6 py-3 bg-gray-50 border-t border-gray-200 text-sm text-gray-500 flex items-center justify-between">
