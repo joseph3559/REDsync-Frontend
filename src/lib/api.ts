@@ -1,5 +1,11 @@
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
+// Debug: Log the API URL being used (only in development)
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  console.log('🔗 API_BASE_URL:', API_BASE_URL);
+  console.log('🌍 NEXT_PUBLIC_API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL);
+}
+
 // Auth API functions
 export async function loginRequest(email: string, password: string): Promise<{ token: string }> {
   const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
