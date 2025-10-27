@@ -1,8 +1,9 @@
 export const SITE = {
-  name: "REDsync",
-  tagline: "Intelligent Document Automation for RED Lecithin",
+  name: "RedLecithin Portal",
+  tagline: "Intelligent Document Automation Platform",
   ctaLabel: "Get Started",
   description: "Professional automation platform for streamlined business operations, document processing, and data analysis.",
+  domain: "redlecithin.online",
 };
 
 export const FEATURES: Array<{ title: string; description: string }> = [

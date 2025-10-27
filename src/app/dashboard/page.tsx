@@ -148,7 +148,7 @@ export default function DashboardHome() {
           <div>
             <h1 className="text-3xl font-bold mb-2 flex items-center">
               <Activity className="w-8 h-8 mr-3" />
-              REDsync Dashboard
+              Dashboard
             </h1>
             <p className="text-slate-300 text-lg">
               Central overview of COA, Import/Export, and Questionnaires

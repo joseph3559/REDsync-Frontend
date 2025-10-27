@@ -61,8 +61,8 @@ export default function RegisterPage() {
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent"></div>
               </div>
               <div>
-                <span className="text-2xl font-bold tracking-tight text-slate-900 group-hover:text-slate-700 transition-colors">REDsync</span>
-                <div className="text-sm text-slate-600 font-medium">RED Lecithin Internal Platform</div>
+                <span className="text-2xl font-bold tracking-tight text-slate-900 group-hover:text-slate-700 transition-colors">RedLecithin Portal</span>
+                <div className="text-sm text-slate-600 font-medium">redlecithin.online</div>
               </div>
             </Link>
           </div>
@@ -152,7 +152,7 @@ export default function RegisterPage() {
                 </div>
                 
                 <h1 className="text-3xl font-bold text-slate-900 mb-2">Create Account</h1>
-                <p className="text-slate-600">Register for access to the REDsync platform</p>
+                <p className="text-slate-600">Register for access to the platform</p>
               </div>
 
               <form className="space-y-5" onSubmit={onSubmit}>
@@ -175,7 +175,7 @@ export default function RegisterPage() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full px-4 py-3 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all bg-white"
-                    placeholder="your.email@redlecithin.com"
+                    placeholder="your.email@redlecithin.online"
                     required
                   />
                 </div>

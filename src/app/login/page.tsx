@@ -47,8 +47,8 @@ export default function LoginPage() {
               <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent"></div>
             </div>
             <div>
-              <span className="text-2xl font-bold tracking-tight text-slate-900 group-hover:text-slate-700 transition-colors">REDsync</span>
-              <div className="text-sm text-slate-600 font-medium">RED Lecithin Internal Platform</div>
+              <span className="text-2xl font-bold tracking-tight text-slate-900 group-hover:text-slate-700 transition-colors">RedLecithin Portal</span>
+              <div className="text-sm text-slate-600 font-medium">redlecithin.online</div>
             </div>
           </Link>
         </div>
@@ -70,7 +70,7 @@ export default function LoginPage() {
                 </div>
                 
                 <h1 className="text-3xl font-bold text-slate-900 mb-2">Welcome Back</h1>
-                <p className="text-slate-600">Sign in to access the REDsync platform</p>
+                <p className="text-slate-600">Sign in to access the platform</p>
               </div>
 
               {/* Login Form */}
@@ -88,7 +88,7 @@ export default function LoginPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all bg-white"
-                      placeholder="your.email@redlecithin.com"
+                      placeholder="your.email@redlecithin.online"
                       required
                     />
                   </div>
@@ -175,7 +175,7 @@ export default function LoginPage() {
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              Secure access for authorized RED Lecithin personnel only
+              Secure access for authorized personnel only
             </div>
           </div>
         </div>

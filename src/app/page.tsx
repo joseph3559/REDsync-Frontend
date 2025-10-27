@@ -14,7 +14,7 @@ export default function Home() {
             </div>
             <div>
               <span className="text-2xl font-bold tracking-tight text-slate-900">{SITE.name}</span>
-              <div className="text-sm text-slate-600 font-medium">RED Lecithin Internal Platform</div>
+              <div className="text-sm text-slate-600 font-medium">redlecithin.online</div>
             </div>
           </div>
           <Link href="/login" className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-slate-900 to-slate-800 text-white px-6 py-3 text-sm font-semibold hover:from-slate-800 hover:to-slate-700 transition-all duration-200 shadow-lg hover:shadow-xl">
@@ -74,8 +74,8 @@ export default function Home() {
                 </Link>
                 
                 <div className="text-sm text-slate-500 text-center">
-                  <div className="font-medium">Authorized Personnel Only</div>
-                  <div>Use your company credentials to access</div>
+                  <div className="font-medium">Secure Access Portal</div>
+                  <div>Use your credentials to access the platform</div>
                 </div>
               </div>
             </div>
@@ -84,10 +84,10 @@ export default function Home() {
 
         {/* Features */}
         <section id="features" className="max-w-7xl mx-auto px-6 sm:px-10 py-20 sm:py-32">
-          <div className="text-center mb-16">
+            <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">Platform Capabilities</h2>
             <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-              Comprehensive business automation tools designed specifically for RED Lecithin's operational excellence
+              Comprehensive business automation tools designed for operational excellence
             </p>
           </div>
           
@@ -189,7 +189,7 @@ export default function Home() {
               <Image src="/logo.png" alt="RED Lecithin logo" width={40} height={40} className="rounded-lg" />
               <div>
                 <div className="font-bold text-slate-900">{SITE.name}</div>
-                <div className="text-sm text-slate-600">RED Lecithin Internal Platform</div>
+                <div className="text-sm text-slate-600">redlecithin.online</div>
               </div>
             </div>
             
@@ -204,7 +204,7 @@ export default function Home() {
             
             {/* Copyright */}
             <div className="text-sm text-slate-500">
-              © {new Date().getFullYear()} RED Lecithin. All rights reserved.
+              © {new Date().getFullYear()} RedLecithin. All rights reserved.
             </div>
           </div>
           
@@ -214,7 +214,7 @@ export default function Home() {
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              This is a secure internal platform for authorized RED Lecithin personnel only
+              This is a secure platform for authorized personnel only
             </div>
           </div>
         </div>

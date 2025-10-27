@@ -109,7 +109,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               {/* Company Logo */}
               <div className="flex items-center gap-2">
                 <Image src="/logo.png" alt="RED Lecithin logo" width={32} height={32} className="rounded-lg" />
-                <span className="hidden sm:block text-sm font-semibold text-slate-700">REDsync</span>
+                <span className="hidden sm:block text-sm font-semibold text-slate-700">RedLecithin Portal</span>
               </div>
 
               {/* User Menu */}

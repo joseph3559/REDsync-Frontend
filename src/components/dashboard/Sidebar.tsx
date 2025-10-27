@@ -20,7 +20,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
       } md:translate-x-0`}
     >
       <div className="h-16 px-4 flex items-center justify-between border-b border-slate-200">
-        <span className="font-semibold text-slate-900">REDsync</span>
+        <span className="font-semibold text-slate-900">RedLecithin Portal</span>
         <button onClick={onClose} className="md:hidden inline-flex items-center justify-center h-9 w-9 rounded-md border border-slate-200">
           ✕
         </button>

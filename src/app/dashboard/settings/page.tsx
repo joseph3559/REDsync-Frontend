@@ -987,7 +987,7 @@ export default function SettingsPage() {
 							</div>
 							<div>
 								<h1 className="text-3xl font-bold text-slate-900">Settings</h1>
-								<p className="text-slate-600">Manage your REDsync configuration and preferences</p>
+								<p className="text-slate-600">Manage your platform configuration and preferences</p>
 							</div>
 						</div>
 					</div>
