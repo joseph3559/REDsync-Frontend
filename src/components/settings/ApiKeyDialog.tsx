@@ -93,15 +93,13 @@ const API_PROVIDERS: ApiProvider[] = [
 interface ApiKeyDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (provider: string, key: string, model?: string) => void;
+  onSave: (provider: string, key: string) => void;
   provider?: ApiProvider;
   currentKey?: string;
-  currentModel?: string;
 }
 
-export default function ApiKeyDialog({ isOpen, onClose, onSave, provider, currentKey, currentModel }: ApiKeyDialogProps) {
+export default function ApiKeyDialog({ isOpen, onClose, onSave, provider, currentKey }: ApiKeyDialogProps) {
   const [apiKey, setApiKey] = useState(currentKey || "");
-  const [selectedModel, setSelectedModel] = useState(currentModel || "");
   const [showKey, setShowKey] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
 
@@ -115,10 +113,9 @@ export default function ApiKeyDialog({ isOpen, onClose, onSave, provider, curren
     await new Promise(resolve => setTimeout(resolve, 1000));
     setIsValidating(false);
     
-    onSave(provider.id, apiKey, selectedModel);
+    onSave(provider.id, apiKey);
     onClose();
     setApiKey("");
-    setSelectedModel("");
   };
 
   const getModelsForProvider = (providerId: string) => {
@@ -212,26 +209,7 @@ export default function ApiKeyDialog({ isOpen, onClose, onSave, provider, curren
               </p>
             </div>
 
-            {/* Model Selection */}
-            {models.length > 0 && (
-              <div className="space-y-3">
-                <label className="block text-sm font-medium text-slate-700">
-                  Model Selection
-                </label>
-                <select
-                  value={selectedModel}
-                  onChange={(e) => setSelectedModel(e.target.value)}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Select a model...</option>
-                  {models.map((model) => (
-                    <option key={model.id} value={model.id}>
-                      {model.name} {model.recommended ? "(Recommended)" : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+            {/* Model Selection Removed - System manages model automatically */}
 
             {/* Guidelines */}
             <div className="space-y-3">

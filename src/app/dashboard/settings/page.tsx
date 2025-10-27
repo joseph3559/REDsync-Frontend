@@ -639,13 +639,9 @@ function AiTab() {
 		onError: (e: any) => toast.error(e?.response?.data?.message || "Save failed"),
 	});
 
-	const handleSaveApiKey = (provider: string, key: string, model?: string) => {
+	const handleSaveApiKey = (provider: string, key: string) => {
 		const updatedApiKeys = { ...(form.apiKeys || {}), [provider]: key };
 		const updatedForm = { ...form, apiKeys: updatedApiKeys };
-		
-		if (model) {
-			updatedForm.model = model;
-		}
 		
 		setForm(updatedForm);
 		save.mutate(updatedForm);
@@ -802,62 +798,17 @@ function AiTab() {
 
 			{/* Global AI Settings */}
 			<SectionCard title="Global AI Settings">
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div>
-						<label className="block text-sm font-medium text-slate-700 mb-2">
-							Default AI Model
-						</label>
-						<select 
-							className="w-full rounded-md border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-							value={form.model} 
-							onChange={(e) => setForm({ ...form, model: e.target.value })}
-						>
-							<option value="gpt-4o">GPT-4o (OpenAI)</option>
-							<option value="gpt-4o-mini">GPT-4o Mini (OpenAI)</option>
-							<option value="gemini-pro">Gemini Pro (Google)</option>
-							<option value="claude-3-opus">Claude 3 Opus (Anthropic)</option>
-							<option value="command">Command (Cohere)</option>
-					</select>
-					</div>
-					<div>
-						<label className="block text-sm font-medium text-slate-700 mb-2">
-							Confidence Threshold
-						</label>
-						<input 
-							className="w-full rounded-md border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-							type="number" 
-							step="0.01" 
-							min={0} 
-							max={1} 
-							value={form.confidenceThreshold} 
-							onChange={(e) => setForm({ ...form, confidenceThreshold: Number(e.target.value) })} 
-							placeholder="0.5"
-						/>
-						<p className="text-xs text-slate-500 mt-1">Minimum confidence for AI responses (0.0 - 1.0)</p>
-					</div>
+				<div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+					<p className="text-sm text-blue-800">
+						<span className="font-medium">Current Model:</span> {form.model || 'gpt-4o-mini'}
+					</p>
+					<p className="text-xs text-blue-600 mt-2">
+						The AI model is automatically managed by the system for optimal performance and cost efficiency.
+					</p>
 				</div>
 			</SectionCard>
 
-			{/* Usage & Billing */}
-			<SectionCard title="Usage & Monitoring">
-				<div className="bg-slate-50 rounded-lg p-4">
-					<h4 className="font-medium text-slate-900 mb-3">API Usage This Month</h4>
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-						<div className="text-center">
-							<div className="text-2xl font-bold text-blue-600">1,247</div>
-							<div className="text-sm text-slate-600">Total Requests</div>
-						</div>
-						<div className="text-center">
-							<div className="text-2xl font-bold text-green-600">$23.45</div>
-							<div className="text-sm text-slate-600">Total Cost</div>
-						</div>
-						<div className="text-center">
-							<div className="text-2xl font-bold text-purple-600">94.2%</div>
-							<div className="text-sm text-slate-600">Success Rate</div>
-						</div>
-					</div>
-				</div>
-			</SectionCard>
+			{/* Usage & Monitoring - Removed dummy data, tracking to be implemented */}
 
 			<div className="flex justify-end">
 				<button 
@@ -875,7 +826,6 @@ function AiTab() {
 				onSave={handleSaveApiKey}
 				provider={selectedProvider}
 				currentKey={selectedProvider ? form.apiKeys?.[selectedProvider.id] : undefined}
-				currentModel={form.model}
 			/>
 		</div>
 	);
