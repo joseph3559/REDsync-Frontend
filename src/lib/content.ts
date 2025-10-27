@@ -1,7 +1,7 @@
 export const SITE = {
   name: "REDsync",
   tagline: "Intelligent Document Automation for RED Lecithin",
-  ctaLabel: "Employee Login",
+  ctaLabel: "Get Started",
   description: "Professional automation platform for streamlined business operations, document processing, and data analysis.",
 };
 

@@ -8,6 +8,7 @@ const navItems = [
   { href: "/dashboard/questionnaires", label: "Questionnaires" },
   { href: "/dashboard/import-export", label: "Import/Export" },
   { href: "/dashboard/settings", label: "Settings" },
+  { href: "/dashboard/user-management", label: "User Management" },
 ];
 
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {

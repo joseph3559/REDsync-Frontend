@@ -1,5 +1,6 @@
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
+// Auth API functions
 export async function loginRequest(email: string, password: string): Promise<{ token: string }> {
   const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
     method: "POST",
@@ -17,12 +18,86 @@ export async function loginRequest(email: string, password: string): Promise<{ t
   return res.json();
 }
 
+export async function registerRequest(
+  email: string, 
+  password: string, 
+  role: "super_admin" | "admin" | "qa_team",
+  name?: string
+): Promise<{ user: any; message: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password, role, name }),
+  });
+  if (!res.ok) {
+    let message = "Registration failed";
+    try {
+      const data = await res.json();
+      message = data?.message || message;
+    } catch {}
+    throw new Error(message);
+  }
+  return res.json();
+}
+
 export async function fetchMe(token: string) {
   const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Unauthorized");
+  return res.json();
+}
+
+export interface User {
+  id: string;
+  email: string;
+  name: string | null;
+  role: "super_admin" | "admin" | "qa_team";
+  status: "pending" | "approved" | "rejected";
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export async function fetchPendingUsers(token: string): Promise<{ users: User[] }> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/pending-users`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Failed to fetch pending users");
+  return res.json();
+}
+
+export async function fetchAllUsers(token: string): Promise<{ users: User[] }> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/users`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Failed to fetch all users");
+  return res.json();
+}
+
+export async function approveUser(userId: string, token: string): Promise<{ user: User; message: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/approve-user/${userId}`, {
+    method: "POST",
+    headers: { 
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}` 
+    },
+  });
+  if (!res.ok) throw new Error("Failed to approve user");
+  return res.json();
+}
+
+export async function rejectUser(userId: string, token: string): Promise<{ user: User; message: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/reject-user/${userId}`, {
+    method: "POST",
+    headers: { 
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}` 
+    },
+  });
+  if (!res.ok) throw new Error("Failed to reject user");
   return res.json();
 }
 
