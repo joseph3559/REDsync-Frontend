@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
     // Allow production builds to successfully complete even if there are ESLint errors.
     ignoreDuringBuilds: true,
   },
+  env: {
+    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://backend.redlecithin.online',
+  },
 };
 
 export default nextConfig;
