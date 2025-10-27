@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FileText, BarChart3, Database, TrendingUp, Upload, Plus, Globe, Target, DollarSign, FileSpreadsheet, Eye, Filter, Download } from "lucide-react";
 import FileUpload, { UploadFile } from "@/components/import-export/FileUpload";
@@ -23,7 +23,7 @@ interface ImportExportStatsLocal {
   monthlyUploads: Array<{ month: string; count: number; }>;
 }
 
-export default function ImportExportPage() {
+function ImportExportPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabFromUrl = (searchParams.get('tab') as ActiveTab) || 'overview';
@@ -995,5 +995,22 @@ export default function ImportExportPage() {
       />
       </div>
     </div>
+  );
+}
+
+export default function ImportExportPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+          </div>
+        </div>
+      </div>
+    }>
+      <ImportExportPageContent />
+    </Suspense>
   );
 }
