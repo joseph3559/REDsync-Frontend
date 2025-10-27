@@ -12,8 +12,10 @@ export default function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "qa_team"
+    role: "QA Team"
   });
+  const [showCustomRole, setShowCustomRole] = useState(false);
+  const [customRole, setCustomRole] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -182,24 +184,41 @@ export default function RegisterPage() {
 
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">Role</label>
-                  <input
-                    type="text"
-                    list="role-suggestions"
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all bg-white"
-                    placeholder="Enter your role or select from suggestions"
+                  <select
+                    value={showCustomRole ? "custom" : formData.role}
+                    onChange={(e) => {
+                      if (e.target.value === "custom") {
+                        setShowCustomRole(true);
+                        setFormData({ ...formData, role: customRole });
+                      } else {
+                        setShowCustomRole(false);
+                        setFormData({ ...formData, role: e.target.value });
+                      }
+                    }}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all bg-white"
                     required
-                  />
-                  <datalist id="role-suggestions">
-                    <option value="QA Team" />
-                    <option value="Admin" />
-                    <option value="Super Admin" />
-                    <option value="Manager" />
-                    <option value="Analyst" />
-                    <option value="Technician" />
-                  </datalist>
-                  <p className="mt-1 text-xs text-slate-500">Select a suggested role or enter a custom one (subject to admin approval)</p>
+                  >
+                    <option value="QA Team">QA Team</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Analyst">Analyst</option>
+                    <option value="Technician">Technician</option>
+                    <option value="custom">Other (Custom Role)</option>
+                  </select>
+                  {showCustomRole && (
+                    <input
+                      type="text"
+                      value={customRole}
+                      onChange={(e) => {
+                        setCustomRole(e.target.value);
+                        setFormData({ ...formData, role: e.target.value });
+                      }}
+                      className="w-full px-4 py-3 mt-3 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all bg-white"
+                      placeholder="Enter your custom role"
+                      required
+                    />
+                  )}
+                  <p className="mt-1 text-xs text-slate-500">Select your role (subject to admin approval)</p>
                 </div>
 
                 <div>
