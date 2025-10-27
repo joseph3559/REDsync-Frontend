@@ -1,18 +1,30 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+import { isSuperAdmin } from "@/lib/auth";
 
-const navItems = [
+const baseNavItems = [
   { href: "/dashboard", label: "Dashboard Overview" },
   { href: "/dashboard/coa-database", label: "COA Database" },
   { href: "/dashboard/questionnaires", label: "Questionnaires" },
   { href: "/dashboard/import-export", label: "Import/Export" },
   { href: "/dashboard/settings", label: "Settings" },
-  { href: "/dashboard/user-management", label: "User Management" },
 ];
 
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
+  const [navItems, setNavItems] = useState(baseNavItems);
+
+  useEffect(() => {
+    // Check if user is super admin and add User Management link
+    if (isSuperAdmin()) {
+      setNavItems([...baseNavItems, { href: "/dashboard/user-management", label: "User Management" }]);
+    } else {
+      setNavItems(baseNavItems);
+    }
+  }, []);
+
   return (
     <aside
       className={`fixed inset-y-0 left-0 z-40 w-72 transform bg-white border-r border-slate-200 transition-transform duration-200 ease-in-out ${

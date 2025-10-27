@@ -44,7 +44,7 @@ export function setTokenCookie(token: string, days = 7) {
 }
 
 // Function to decode JWT token and get user info
-export function getUserFromToken(): { email: string; id: string } | null {
+export function getUserFromToken(): { email: string; id: string; role: string } | null {
   const token = getToken();
   if (!token) return null;
   
@@ -53,13 +53,20 @@ export function getUserFromToken(): { email: string; id: string } | null {
     const payload = token.split('.')[1];
     const decoded = JSON.parse(atob(payload));
     return {
-      email: decoded.email || 'user@redlecithin.com',
-      id: decoded.userId || decoded.id || '1'
+      email: decoded.email || 'user@redlecithin.online',
+      id: decoded.userId || decoded.id || '1',
+      role: decoded.role || 'admin'
     };
   } catch (error) {
     console.error('Failed to decode token:', error);
     return null;
   }
+}
+
+// Check if user is super admin
+export function isSuperAdmin(): boolean {
+  const user = getUserFromToken();
+  return user?.role === 'super_admin' || user?.role === 'Super Admin';
 }
 
 
