@@ -142,8 +142,8 @@ export default function DeleteDialogDemo() {
         isOpen={singleDialog}
         onClose={() => setSingleDialog(false)}
         onConfirm={handleDelete}
-        itemName="Lecithin_Sample_2024_001.pdf"
-        itemType="COA record"
+        title="Delete COA record?"
+        description="Are you sure you want to delete Lecithin_Sample_2024_001.pdf? This action cannot be undone."
         loading={loading}
       />
 

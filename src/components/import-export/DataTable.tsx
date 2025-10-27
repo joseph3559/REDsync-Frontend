@@ -181,6 +181,7 @@ export default function DataTable({ data, viewMode }: DataTableProps) {
       hsCode: '',
       incoterm: '',
       currency: '',
+      company: '',
       priceMin: '',
       priceMax: ''
     });

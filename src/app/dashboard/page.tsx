@@ -58,15 +58,29 @@ export default function DashboardHome() {
         const [coa, importExport, questionnaire, activity] = await Promise.all([
           fetchCOAStats(token).catch((err) => {
             console.error('COA stats failed:', err);
-            return { totalFiles: 0, totalRecords: 0, successRate: 0, lastProcessed: null };
+            return { 
+              totalSamplesThisMonth: 0, 
+              totalFiles: 0, 
+              avgProcessingTime: '0', 
+              lastUploadDate: null, 
+              monthlyUploads: [] 
+            };
           }),
           fetchImportExportStats(token).catch((err) => {
             console.error('Import/Export stats failed:', err);
-            return { totalRecords: 0, totalFiles: 0, avgProcessingTime: 0, lastUploadDate: null };
+            return { totalRecords: 0, totalFiles: 0, avgProcessingTime: 0, lastUploadDate: null, monthlyUploads: [] };
           }),
           fetchQuestionnaireStats(token).catch((err) => {
             console.error('Questionnaire stats failed:', err);
-            return { totalProcessed: 0, totalDrafts: 0, successRate: 0, lastProcessed: null };
+            return { 
+              totalProcessed: 0, 
+              avgAutoAnswered: '0', 
+              lastProcessedDate: null, 
+              totalDrafts: 0, 
+              totalQuestions: 0, 
+              databaseAnswers: 0, 
+              aiAnswers: 0 
+            };
           }),
           fetchRecentActivity(token, 8).catch((err) => {
             console.error('Recent activity failed:', err);
@@ -160,7 +174,7 @@ export default function DashboardHome() {
           <div className="hidden lg:flex items-center space-x-4">
             <div className="text-center">
               <div className="text-2xl font-bold">
-                {(coaStats?.totalFiles || 0) + (importExportStats?.totalImports || 0) + (importExportStats?.totalExports || 0) + (questionnaireStats?.totalProcessed || 0)}
+                {(coaStats?.totalFiles || 0) + (importExportStats?.totalRecords || 0) + (questionnaireStats?.totalProcessed || 0)}
               </div>
               <div className="text-sm text-slate-400">Total Records</div>
             </div>
@@ -187,12 +201,12 @@ export default function DashboardHome() {
               <span className="font-semibold text-lg">{coaStats?.totalFiles || 0}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Total Records</span>
-              <span className="font-semibold text-lg">{coaStats?.totalRecords || 0}</span>
+              <span className="text-sm text-gray-600">Samples This Month</span>
+              <span className="font-semibold text-lg">{coaStats?.totalSamplesThisMonth || 0}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Success Rate</span>
-              <span className="font-semibold text-lg text-green-600">{coaStats?.successRate || 0}%</span>
+              <span className="text-sm text-gray-600">Avg Processing</span>
+              <span className="font-semibold text-lg text-green-600">{coaStats?.avgProcessingTime || '0'}s</span>
             </div>
           </div>
           <Link
@@ -259,8 +273,8 @@ export default function DashboardHome() {
               <span className="font-semibold text-lg">{questionnaireStats?.totalDrafts || 0}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Success Rate</span>
-              <span className="font-semibold text-lg text-purple-600">{questionnaireStats?.successRate || 0}%</span>
+              <span className="text-sm text-gray-600">Avg Auto-Answered</span>
+              <span className="font-semibold text-lg text-purple-600">{questionnaireStats?.avgAutoAnswered || '0'}%</span>
             </div>
           </div>
           <Link
@@ -298,13 +312,13 @@ export default function DashboardHome() {
               <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                 {getModuleIcon(activity.module)}
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                  <p className="text-xs text-gray-600">{activity.details}</p>
+                  <p className="text-sm font-medium text-gray-900">{activity.type}</p>
+                  <p className="text-xs text-gray-600">{activity.name}</p>
                 </div>
                 <div className="text-right">
                   {getStatusIcon(activity.status)}
                   <p className="text-xs text-gray-500 mt-1">
-                    {new Date(activity.timestamp).toLocaleDateString()}
+                    {new Date(activity.date).toLocaleDateString()}
                   </p>
                 </div>
               </div>
