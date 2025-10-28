@@ -39,7 +39,7 @@ export function UserModal() {
 
 	if (!open) return null;
 	return (
-		<div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center">
+		<div className="fixed inset-0 z-50 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center">
 			<div className="w-full max-w-md rounded-lg bg-white p-4 shadow-lg">
 				<h3 className="text-lg font-semibold mb-3">{form.id ? "Edit User" : "Add User"}</h3>
 				<div className="space-y-3">
