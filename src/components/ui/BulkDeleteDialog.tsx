@@ -29,7 +29,7 @@ export default function BulkDeleteDialog({
   const description = `This will permanently delete the following ${itemCount} ${itemType}${itemCount > 1 ? 's' : ''}. This action cannot be undone.`;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-gray-900/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-auto max-h-[80vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-200">

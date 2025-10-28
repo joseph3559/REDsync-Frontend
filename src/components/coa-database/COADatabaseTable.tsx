@@ -250,13 +250,56 @@ export default function COADatabaseTable({
     const selectedData = sortedData.filter((row, index) => selectedRows.has(getRowId(row, index)));
     if (selectedData.length === 0) return;
 
-    // Format data for Excel/clipboard
-    const headers = displayColumns;
+    // Format data for Excel/clipboard - NO HEADERS, NO Sample #, NO Batch - only parameter data
+    // Filter out Sample # (first column, index 0) and Batch column
+    const dataColumns = displayColumns.filter((col, index) => {
+      const originalIndex = columns.indexOf(col);
+      return originalIndex !== 0 && col !== 'Batch';
+    });
+    
+    const csvContent = selectedData.map(row => 
+      dataColumns.map(col => {
+        const value = formatCellValue(row[col], `${getRowId(row, 0)}-${col}`, col);
+        // Escape values that contain tabs, quotes, or newlines
+        if (value.includes('\t') || value.includes('"') || value.includes('\n')) {
+          return `"${value.replace(/"/g, '""')}"`;
+        }
+        return value || '';
+      }).join('\t')
+    ).join('\n');
+
+    try {
+      await navigator.clipboard.writeText(csvContent);
+      // Show brief success feedback
+      const count = selectedData.length;
+      setCopyNotice(`Copied ${count} row${count > 1 ? 's' : ''} (parameters only)`);
+      setTimeout(() => setCopyNotice(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+      // Fallback: create a textarea and copy
+      const textarea = document.createElement('textarea');
+      textarea.value = csvContent;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      const count = selectedData.length;
+      setCopyNotice(`Copied ${count} row${count > 1 ? 's' : ''} (parameters only)`);
+      setTimeout(() => setCopyNotice(null), 2000);
+    }
+  };
+
+  const handleCopySelectedWithAll = async () => {
+    const selectedData = sortedData.filter((row, index) => selectedRows.has(getRowId(row, index)));
+    if (selectedData.length === 0) return;
+
+    // Format data for Excel/clipboard - WITH HEADERS, Sample #, and Batch - everything!
+    const allColumns = displayColumns;
     const csvContent = [
-      headers.join('\t'), // Tab-separated for Excel
+      allColumns.join('\t'), // Include header row
       ...selectedData.map(row => 
-        headers.map(col => {
-          const value = formatCellValue(row[col], `${getRowId(row, 0)}-${col}`);
+        allColumns.map(col => {
+          const value = formatCellValue(row[col], `${getRowId(row, 0)}-${col}`, col);
           // Escape values that contain tabs, quotes, or newlines
           if (value.includes('\t') || value.includes('"') || value.includes('\n')) {
             return `"${value.replace(/"/g, '""')}"`;
@@ -270,7 +313,7 @@ export default function COADatabaseTable({
       await navigator.clipboard.writeText(csvContent);
       // Show brief success feedback
       const count = selectedData.length;
-      setCopyNotice(`Copied ${count} row${count > 1 ? 's' : ''}`);
+      setCopyNotice(`Copied ${count} row${count > 1 ? 's' : ''} with headers & all columns`);
       setTimeout(() => setCopyNotice(null), 2000);
     } catch (err) {
       console.error('Failed to copy to clipboard:', err);
@@ -282,7 +325,7 @@ export default function COADatabaseTable({
       document.execCommand('copy');
       document.body.removeChild(textarea);
       const count = selectedData.length;
-      setCopyNotice(`Copied ${count} row${count > 1 ? 's' : ''}`);
+      setCopyNotice(`Copied ${count} row${count > 1 ? 's' : ''} with headers & all columns`);
       setTimeout(() => setCopyNotice(null), 2000);
     }
   };
@@ -317,7 +360,7 @@ export default function COADatabaseTable({
     setDragOverColumn(null);
   };
 
-  const formatCellValue = (value: unknown, cellId: string) => {
+  const formatCellValue = (value: unknown, cellId: string, columnName?: string) => {
     const format = cellFormats[cellId];
     
     // Handle null values and "null" strings - convert to empty string for clean display
@@ -326,6 +369,26 @@ export default function COADatabaseTable({
     }
     
     let displayValue = safeToString(value);
+    
+    // Extract column name from cellId if not provided
+    const colName = columnName || (cellId.includes('-') ? cellId.split('-').slice(-1)[0] : '');
+    
+    // Special handling for Enterobacteriaceae: if less than 10, show "Negative"
+    if (colName === 'Enterobacteriaceae') {
+      // Check if value contains "less than 10" or "< 10" or is a number less than 10
+      const lowerValue = displayValue.toLowerCase();
+      if (lowerValue.includes('less than 10') || 
+          lowerValue.includes('< 10') || 
+          lowerValue.includes('<10') ||
+          lowerValue === '10') {
+        return 'Negative';
+      }
+      // Also check if it's a numeric value less than 10
+      const numValue = parseFloat(displayValue);
+      if (!isNaN(numValue) && numValue < 10) {
+        return 'Negative';
+      }
+    }
     
     // Standardize capitalization for status values
     if (displayValue.toLowerCase() === 'negative') {
@@ -347,13 +410,13 @@ export default function COADatabaseTable({
 
   const getCellClassName = (cellId: string) => {
     const format = cellFormats[cellId];
-    let className = "px-4 py-4 text-sm text-gray-900 min-w-[140px] border-r border-gray-200 h-[60px] align-middle";
+    let className = "px-4 py-4 text-sm text-gray-900 min-w-[140px] border-r border-gray-200 h-[60px] align-middle cursor-cell transition-all";
     
     if (format?.bold) className += " font-bold";
     if (format?.italic) className += " italic";
     if (format?.underline) className += " underline";
     if (format?.strikethrough) className += " line-through";
-    if (selectedCells.has(cellId)) className += " bg-blue-100 border-blue-300";
+    if (selectedCells.has(cellId)) className += " !bg-blue-200 !border-2 !border-blue-500 ring-1 ring-blue-400 shadow-sm";
     
     return className;
   };
@@ -382,6 +445,70 @@ export default function COADatabaseTable({
   const endCellDrag = () => {
     setIsDraggingCells(false);
     setDragRowId(null);
+  };
+
+  const handleDownloadSelectedCells = () => {
+    if (selectedCells.size === 0) return;
+    
+    // Build rowId -> row mapping for ordering
+    const rowIdToRow: Record<string, CoaUploadResult> = {};
+    const rowOrder: string[] = [];
+    sortedData.forEach((row, index) => {
+      const id = getRowId(row, index);
+      rowIdToRow[id] = row;
+      rowOrder.push(id);
+    });
+
+    // Group selected cells by rowId
+    const rowToCells: Record<string, { colKey: string; colIndex: number; cellId: string }[]> = {};
+    selectedCells.forEach(cellId => {
+      const lastDash = cellId.lastIndexOf('-');
+      if (lastDash <= 0) return;
+      const rowId = cellId.slice(0, lastDash);
+      const colKey = cellId.slice(lastDash + 1);
+      const colIndex = columns.indexOf(colKey);
+      if (colIndex === -1) return;
+      if (!rowToCells[rowId]) rowToCells[rowId] = [];
+      rowToCells[rowId].push({ colKey, colIndex, cellId });
+    });
+
+    // Create CSV content with headers
+    const allColKeys = new Set<string>();
+    Object.values(rowToCells).forEach(cells => {
+      cells.forEach(c => allColKeys.add(c.colKey));
+    });
+    const orderedColKeys = Array.from(allColKeys).sort((a, b) => columns.indexOf(a) - columns.indexOf(b));
+    
+    const lines: string[] = [orderedColKeys.join(',')]; // Header row
+    
+    rowOrder.forEach(rowId => {
+      const cells = rowToCells[rowId];
+      if (!cells || cells.length === 0) return;
+      const row = rowIdToRow[rowId];
+      const cellMap = new Map(cells.map(c => [c.colKey, c]));
+      const values = orderedColKeys.map(colKey => {
+        const cell = cellMap.get(colKey);
+        if (!cell) return '';
+        const v = formatCellValue(row[cell.colKey], cell.cellId, cell.colKey);
+        const s = v || '';
+        return (s.includes(',') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g, '""')}"` : s;
+      });
+      lines.push(values.join(','));
+    });
+
+    const content = lines.join('\n');
+    const blob = new Blob([content], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `coa-selection-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    setCopyNotice('Downloaded selected cells');
+    setTimeout(() => setCopyNotice(null), 2000);
   };
 
   const handleCopySelectedCells = async () => {
@@ -417,7 +544,7 @@ export default function COADatabaseTable({
       const row = rowIdToRow[rowId];
       const ordered = cells.sort((a, b) => a.colIndex - b.colIndex);
       const values = ordered.map(c => {
-        const v = formatCellValue(row[c.colKey], c.cellId);
+        const v = formatCellValue(row[c.colKey], c.cellId, c.colKey);
         const s = v || '';
         return (s.includes('\t') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g, '""')}"` : s;
       });
@@ -484,9 +611,30 @@ export default function COADatabaseTable({
       className="bg-white rounded-lg shadow-sm border border-gray-200"
       tabIndex={0}
       onKeyDown={(e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c' && selectedCells.size > 0) {
+        // Ctrl+C / Cmd+C - Copy
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+          if (selectedCells.size > 0) {
+            e.preventDefault();
+            handleCopySelectedCells();
+          } else if (selectedRows.size > 0) {
+            e.preventDefault();
+            handleCopySelected();
+          }
+        }
+        // Escape - Clear selection
+        if (e.key === 'Escape') {
+          if (selectedCells.size > 0) {
+            e.preventDefault();
+            setSelectedCells(new Set());
+          } else if (selectedRows.size > 0) {
+            e.preventDefault();
+            setSelectedRows(new Set());
+          }
+        }
+        // Ctrl+A / Cmd+A - Select all rows
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a' && selectedCells.size === 0) {
           e.preventDefault();
-          handleCopySelectedCells();
+          handleSelectAll(true);
         }
       }}
       onMouseUp={endCellDrag}
@@ -494,6 +642,18 @@ export default function COADatabaseTable({
       <style jsx>{`
         .bg-gray-25 {
           background-color: #fafafa;
+        }
+        thead, thead * {
+          user-select: none !important;
+          -webkit-user-select: none !important;
+          -moz-user-select: none !important;
+          -ms-user-select: none !important;
+        }
+        .select-none, .select-none * {
+          user-select: none !important;
+          -webkit-user-select: none !important;
+          -moz-user-select: none !important;
+          -ms-user-select: none !important;
         }
       `}</style>
       {/* Header with Search and Controls */}
@@ -517,6 +677,49 @@ export default function COADatabaseTable({
             <div className="flex items-center space-x-2 px-3 py-2 bg-gray-50 rounded-md text-sm text-gray-600">
               <Filter className="w-4 h-4" />
               <span>{columns.length} total columns (including blanks)</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Keyboard Shortcuts & Button Info */}
+        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-start justify-between gap-8">
+            {/* Keyboard Shortcuts */}
+            <div className="flex-1">
+              <h4 className="text-xs font-semibold text-gray-700 mb-2">⌨️ Keyboard Shortcuts</h4>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-700">
+                <div><kbd className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-xs font-mono">Ctrl+A</kbd> / <kbd className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-xs font-mono">⌘A</kbd> Select all rows</div>
+                <div><kbd className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-xs font-mono">Ctrl+C</kbd> / <kbd className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-xs font-mono">⌘C</kbd> Copy selection</div>
+                <div><kbd className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-xs font-mono">Shift+Click</kbd> Select multiple cells</div>
+                <div><kbd className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-xs font-mono">Esc</kbd> Clear selection</div>
+              </div>
+            </div>
+            
+            {/* Button Actions */}
+            <div className="flex-1 border-l border-blue-300 pl-6">
+              <h4 className="text-xs font-semibold text-gray-700 mb-2">🔘 Toolbar Buttons</h4>
+              <div className="space-y-1.5 text-xs text-gray-700">
+                <div className="flex items-center">
+                  <span className="inline-flex items-center justify-center w-3 h-3 rounded-full bg-blue-600 mr-2"></span>
+                  <span className="font-semibold text-blue-700 mr-2">Copy Data:</span>
+                  <span>Parameters only (no Sample #, Batch, headers)</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="inline-flex items-center justify-center w-3 h-3 rounded-full bg-purple-600 mr-2"></span>
+                  <span className="font-semibold text-purple-700 mr-2">Copy All:</span>
+                  <span>Everything including headers & identifiers</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="inline-flex items-center justify-center w-3 h-3 rounded-full bg-green-600 mr-2"></span>
+                  <span className="font-semibold text-green-700 mr-2">Download:</span>
+                  <span>Export selection as CSV file</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="inline-flex items-center justify-center w-3 h-3 rounded-full bg-red-600 mr-2"></span>
+                  <span className="font-semibold text-red-700 mr-2">Delete:</span>
+                  <span>Remove selected rows from database</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -629,14 +832,16 @@ export default function COADatabaseTable({
             {/* Fixed columns (Sample #, Batch) */}
             <div className="flex-shrink-0 border-r-2 border-gray-300">
               <table className="border-separate border-spacing-0">
-                <thead className="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 shadow-sm">
+                <thead className="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 shadow-sm select-none">
                   <tr>
                     {/* Row Number Header */}
-                    <th className="px-3 py-4 text-left border-b-2 border-gray-300 w-16 bg-gray-100 h-[60px] align-middle">
+                    <th className="px-3 py-4 text-left border-b-2 border-gray-300 w-16 bg-gray-100 h-[60px] align-middle select-none">
                       <span className="text-xs font-semibold text-gray-600">#</span>
                     </th>
                     {/* Select All Checkbox */}
-                    <th className="px-4 py-4 text-left border-b-2 border-gray-300 w-12 bg-gray-50 h-[60px] align-middle">
+                    <th className={`px-4 py-4 text-left border-b-2 border-gray-300 w-12 h-[60px] align-middle select-none transition-colors ${
+                      selectedRows.size > 0 ? 'bg-green-100' : 'bg-gray-50'
+                    }`}>
                       <input
                         type="checkbox"
                         checked={isAllSelected}
@@ -644,7 +849,8 @@ export default function COADatabaseTable({
                           if (el) el.indeterminate = isIndeterminate;
                         }}
                         onChange={(e) => handleSelectAll(e.target.checked)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                        title={`Select all ${sortedData.length} rows (Ctrl+A / Cmd+A)`}
                       />
                     </th>
                     {/* Fixed columns headers - Sample # and Batch */}
@@ -656,7 +862,7 @@ export default function COADatabaseTable({
                       return (
                         <th
                           key={`fixed-${index}-${originalIndex}`}
-                          className={`px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors min-w-[140px] border-b-2 border-gray-300 bg-gray-50 h-[60px] align-middle ${getColumnTypeColor(column)} ${
+                          className={`px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors min-w-[140px] border-b-2 border-gray-300 bg-gray-50 h-[60px] align-middle select-none ${getColumnTypeColor(column)} ${
                             draggedColumn === originalIndex ? 'opacity-50' : ''
                           } ${
                             dragOverColumn === originalIndex ? 'border-blue-400 bg-blue-50' : ''
@@ -704,23 +910,26 @@ export default function COADatabaseTable({
                         key={rowId}
                         className={`hover:bg-blue-50 hover:shadow-sm transition-all duration-200 border-b border-gray-200 relative ${
                           isNewRow ? 'animate-pulse bg-green-50 shadow-md border-green-300' : 
-                          isSelected ? 'bg-blue-100 shadow-sm' : 
+                          isSelected ? 'bg-green-50 border-l-4 border-l-green-500 shadow-md ring-1 ring-green-200' : 
                           isEvenRow ? 'bg-gray-25' : 'bg-white'
                         }`}
                       >
                         {/* Row Number */}
-                        <td className="px-3 py-4 w-16 bg-gray-50 border-r border-gray-200 sticky left-0 z-10 h-[60px] align-middle">
-                          <span className="text-sm font-medium text-gray-600 select-none">
+                        <td className="px-3 py-4 w-16 bg-gray-50 border-r border-gray-200 sticky left-0 z-10 h-[60px] align-middle select-none">
+                          <span className="text-sm font-medium text-gray-600">
                             {rowIndex + 1}
                           </span>
                         </td>
                         {/* Row checkbox */}
-                        <td className="px-4 py-4 w-12 h-[60px] align-middle">
+                        <td className={`px-4 py-4 w-12 h-[60px] align-middle select-none transition-colors ${
+                          isSelected ? 'bg-green-100' : ''
+                        }`}>
                           <input
                             type="checkbox"
                             checked={isSelected}
                             onChange={(e) => handleSelectRow(rowId, e.target.checked)}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            className="rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
+                            title={`Select row ${rowIndex + 1}`}
                           />
                         </td>
                         {/* Fixed columns data - Sample # and Batch */}
@@ -733,14 +942,10 @@ export default function COADatabaseTable({
                           return (
                             <td
                               key={`fixed-${colIndex}-${originalIndex}-${rowIndex}`}
-                              className={`${getCellClassName(cellId)} bg-gray-25`}
-                              onMouseDown={(e) => {
-                                beginCellDrag(rowId, cellId, e.shiftKey || e.ctrlKey || e.metaKey);
-                              }}
-                              onMouseEnter={() => extendCellDrag(rowId, cellId)}
+                              className="px-4 py-4 text-sm text-gray-900 min-w-[140px] border-r border-gray-200 h-[60px] align-middle bg-gray-25 select-none font-medium"
                             >
-                              <div className="truncate font-medium" title={safeToString(row[column])}>
-                                {formatCellValue(row[column], cellId) || "-"}
+                              <div className="truncate" title={safeToString(row[column])}>
+                                {formatCellValue(row[column], cellId, column) || "-"}
                               </div>
                             </td>
                           );
@@ -755,7 +960,7 @@ export default function COADatabaseTable({
             {/* Scrollable columns */}
             <div className="flex-1 overflow-x-auto">
               <table className="w-full border-separate border-spacing-0">
-                <thead className="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 shadow-sm">
+                <thead className="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 shadow-sm select-none">
                   <tr>
                     {displayColumns.map((column, index) => {
                       const originalIndex = columns.indexOf(column);
@@ -765,7 +970,7 @@ export default function COADatabaseTable({
                       return (
                         <th
                           key={`scrollable-${index}-${originalIndex}`}
-                          className={`px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors min-w-[140px] border-b-2 border-r border-gray-300 relative group bg-gray-50 h-[60px] align-middle ${getColumnTypeColor(column)} ${
+                          className={`px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors min-w-[140px] border-b-2 border-r border-gray-300 relative group bg-gray-50 h-[60px] align-middle select-none ${getColumnTypeColor(column)} ${
                             draggedColumn === originalIndex ? 'opacity-50' : ''
                           } ${
                             dragOverColumn === originalIndex ? 'border-blue-400 bg-blue-50' : ''
@@ -824,7 +1029,7 @@ export default function COADatabaseTable({
                         key={rowId}
                         className={`hover:bg-blue-50 hover:shadow-sm transition-all duration-200 border-b border-gray-200 relative ${
                           isNewRow ? 'animate-pulse bg-green-50 shadow-md border-green-300' : 
-                          isSelected ? 'bg-blue-100 shadow-sm' : 
+                          isSelected ? 'bg-green-50 border-l-4 border-l-green-500 shadow-md ring-1 ring-green-200' : 
                           isEvenRow ? 'bg-gray-25' : 'bg-white'
                         }`}
                       >
@@ -844,7 +1049,7 @@ export default function COADatabaseTable({
                               onMouseEnter={() => extendCellDrag(rowId, cellId)}
                             >
                               <div className="truncate font-medium" title={safeToString(row[column])}>
-                                {formatCellValue(row[column], cellId) || "-"}
+                                {formatCellValue(row[column], cellId, column) || "-"}
                               </div>
                             </td>
                           );
@@ -858,6 +1063,97 @@ export default function COADatabaseTable({
           </div>
         )}
       </div>
+      
+      {/* Floating Cell Selection Toolbar */}
+      {selectedCells.size > 0 && (
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-white border-2 border-blue-500 rounded-lg shadow-2xl p-3 flex items-center space-x-3 animate-in slide-in-from-bottom-4 duration-200 z-50">
+          <div className="flex items-center space-x-2 border-r border-gray-300 pr-3">
+            <span className="text-sm font-semibold text-gray-700">
+              {selectedCells.size} {selectedCells.size === 1 ? 'cell' : 'cells'} selected
+            </span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={handleCopySelectedCells}
+              className="flex items-center space-x-1 px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
+              title="Copy selected cells (Ctrl+C / Cmd+C)"
+            >
+              <Copy className="w-4 h-4" />
+              <span>Copy</span>
+            </button>
+            <button
+              onClick={handleDownloadSelectedCells}
+              className="flex items-center space-x-1 px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium"
+              title="Download as CSV"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download</span>
+            </button>
+            <button
+              onClick={() => setSelectedCells(new Set())}
+              className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors text-sm font-medium"
+              title="Clear selection (Esc)"
+            >
+              Clear
+            </button>
+          </div>
+          <div className="border-l border-gray-300 pl-3 text-xs text-gray-500">
+            <div>💡 Shift+Click to select multiple</div>
+          </div>
+        </div>
+      )}
+      
+      {/* Floating Row Selection Toolbar */}
+      {selectedRows.size > 0 && selectedCells.size === 0 && (
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-white border-2 border-green-500 rounded-lg shadow-2xl p-3 flex items-center space-x-3 animate-in slide-in-from-bottom-4 duration-200 z-50">
+          <div className="flex items-center space-x-2 border-r border-gray-300 pr-3">
+            <span className="text-sm font-semibold text-gray-700">
+              {selectedRows.size} {selectedRows.size === 1 ? 'row' : 'rows'} selected
+            </span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={handleCopySelected}
+              className="flex items-center space-x-1 px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
+              title="Copy parameters only (excludes Sample #, Batch, and headers) - Ctrl+C / Cmd+C"
+            >
+              <Copy className="w-4 h-4" />
+              <span>Copy Data</span>
+            </button>
+            <button
+              onClick={handleCopySelectedWithAll}
+              className="flex items-center space-x-1 px-3 py-1.5 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors text-sm font-medium"
+              title="Copy everything including headers, Sample #, and Batch"
+            >
+              <Copy className="w-4 h-4" />
+              <span>Copy All</span>
+            </button>
+            <button
+              onClick={handleExportSelected}
+              className="flex items-center space-x-1 px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium"
+              title="Download selected rows as CSV"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download</span>
+            </button>
+            <button
+              onClick={handleDeleteSelected}
+              className="flex items-center space-x-1 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm font-medium"
+              title="Delete selected rows"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Delete</span>
+            </button>
+            <button
+              onClick={() => setSelectedRows(new Set())}
+              className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors text-sm font-medium"
+              title="Clear selection (Esc)"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
       
       {/* Copy feedback toast */}
       {copyNotice && (

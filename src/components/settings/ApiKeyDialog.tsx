@@ -151,7 +151,7 @@ export default function ApiKeyDialog({ isOpen, onClose, onSave, provider, curren
   const models = getModelsForProvider(provider.id);
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-gray-900/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className={`bg-gradient-to-r from-${provider.color}-500 to-${provider.color}-600 px-6 py-4 text-white`}>

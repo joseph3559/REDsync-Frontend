@@ -25,6 +25,19 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  // Force light mode for dashboard
+  useEffect(() => {
+    // Override dark mode by setting light background on body
+    document.documentElement.style.colorScheme = 'light';
+    document.body.style.backgroundColor = '#f9fafb'; // gray-50
+    
+    return () => {
+      // Cleanup on unmount
+      document.documentElement.style.colorScheme = '';
+      document.body.style.backgroundColor = '';
+    };
+  }, []);
+
   useEffect(() => {
     const loadUserData = async () => {
       setIsClient(true);
@@ -91,9 +104,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-white text-slate-800">
+    <div className="min-h-screen bg-gray-50 text-slate-800">
       <Sidebar open={open} onClose={() => setOpen(false)} />
-      <div className="md:pl-72">
+      <div className="md:pl-72 bg-gray-50">
         <header className="sticky top-0 z-30 h-16 bg-white/70 backdrop-blur border-b border-slate-200 flex items-center">
           <div className="flex-1 px-4 sm:px-6 flex items-center gap-3">
             <button
