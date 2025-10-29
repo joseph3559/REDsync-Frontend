@@ -22,7 +22,7 @@ export default function LoginPage() {
       const { token } = await loginRequest(email, password);
       storeToken(token);
       setTokenCookie(token);
-      router.push("/dashboard");
+      router.push("/dashboard/coa-database");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Login failed";
       setError(message);
